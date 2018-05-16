@@ -81,10 +81,7 @@ namespace XMLParse1
         {
             string targetFile = tbPath.Text;
             string outFile = DirFromFullPath(targetFile) + "//" + tbOutputName.Text + ".txt";
-            ApptusXMLencode.ApptusHeaderIndexes ApptusHI = ApptusXMLencode.GatherApptusIndexes(targetFile);
-
-            if (ApptusHI.valid == false) MessageBox.Show("Oh no! The header wasn't fully initialized!");
-            else ApptusXMLencode.transformExceltoXML(targetFile, outFile, ApptusHI, !chk_Concise_XML.Checked, !chk_XML_Min_Data.Checked);
+            ApptusXMLencode.transformExceltoXML(targetFile, outFile, !chk_Concise_XML.Checked, !chk_XML_Min_Data.Checked);
         }
 
         private void bw_XML_RunComplete(object sender, RunWorkerCompletedEventArgs e)

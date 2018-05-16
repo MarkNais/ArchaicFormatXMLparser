@@ -37,9 +37,9 @@
             this.chk_XML_Min_Data = new System.Windows.Forms.CheckBox();
             this.group_XML = new System.Windows.Forms.GroupBox();
             this.group_Excel = new System.Windows.Forms.GroupBox();
+            this.btn_Create_Excel = new System.Windows.Forms.Button();
             this.bw_XML = new System.ComponentModel.BackgroundWorker();
             this.bw_Excel = new System.ComponentModel.BackgroundWorker();
-            this.btn_Create_Excel = new System.Windows.Forms.Button();
             this.lbl_Input_Path = new System.Windows.Forms.Label();
             this.lbl_Output_Name = new System.Windows.Forms.Label();
             this.tbOutputName = new System.Windows.Forms.TextBox();
@@ -53,7 +53,7 @@
             this.tbPath.Name = "tbPath";
             this.tbPath.Size = new System.Drawing.Size(405, 20);
             this.tbPath.TabIndex = 0;
-            this.tbPath.Text = "C:\\Users\\MarkN\\Documents\\TestFile.txt";
+            this.tbPath.Text = "C:\\Users\\MarkN\\Documents\\BUILDING CONSTRUCTION PRODUCTS.xlsx";
             // 
             // btn_Run_XML
             // 
@@ -138,6 +138,16 @@
             this.group_Excel.TabStop = false;
             this.group_Excel.Text = "XML To Excel";
             // 
+            // btn_Create_Excel
+            // 
+            this.btn_Create_Excel.Location = new System.Drawing.Point(36, 69);
+            this.btn_Create_Excel.Name = "btn_Create_Excel";
+            this.btn_Create_Excel.Size = new System.Drawing.Size(75, 23);
+            this.btn_Create_Excel.TabIndex = 0;
+            this.btn_Create_Excel.Text = "Create Excel";
+            this.btn_Create_Excel.UseVisualStyleBackColor = true;
+            this.btn_Create_Excel.Click += new System.EventHandler(this.btn_Create_Excel_Click);
+            // 
             // bw_XML
             // 
             this.bw_XML.WorkerSupportsCancellation = true;
@@ -149,16 +159,6 @@
             this.bw_Excel.WorkerSupportsCancellation = true;
             this.bw_Excel.DoWork += new System.ComponentModel.DoWorkEventHandler(this.bw_Excel_DoWork);
             this.bw_Excel.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.bw_Excel_RunComplete);
-            // 
-            // btn_Create_Excel
-            // 
-            this.btn_Create_Excel.Location = new System.Drawing.Point(36, 69);
-            this.btn_Create_Excel.Name = "btn_Create_Excel";
-            this.btn_Create_Excel.Size = new System.Drawing.Size(75, 23);
-            this.btn_Create_Excel.TabIndex = 0;
-            this.btn_Create_Excel.Text = "Create Excel";
-            this.btn_Create_Excel.UseVisualStyleBackColor = true;
-            this.btn_Create_Excel.Click += new System.EventHandler(this.btn_Create_Excel_Click);
             // 
             // lbl_Input_Path
             // 
