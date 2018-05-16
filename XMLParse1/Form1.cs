@@ -22,8 +22,9 @@ namespace XMLParse1
 
         private void btn_Remind_Header_Click(object sender, EventArgs e)
         {
-            ExcelHeaderReuirements formReminder = new ExcelHeaderReuirements();
-            formReminder.ShowDialog();
+            MessageBox.Show("Excel must be sorted in ascending order of 'Left'.\r\n" +
+                "Column order does not matter.\r\n" +
+                "Header must containt a 'level' column, case-insensitive.");
         }
 
         private void btn_Browse_Click(object sender, EventArgs e)
@@ -81,7 +82,7 @@ namespace XMLParse1
         {
             string targetFile = tbPath.Text;
             string outFile = DirFromFullPath(targetFile) + "//" + tbOutputName.Text + ".txt";
-            ApptusXMLencode.transformExceltoXML(targetFile, outFile, !chk_Concise_XML.Checked, !chk_XML_Min_Data.Checked);
+            ApptusXMLencode.transformExceltoXML(targetFile, outFile);
         }
 
         private void bw_XML_RunComplete(object sender, RunWorkerCompletedEventArgs e)

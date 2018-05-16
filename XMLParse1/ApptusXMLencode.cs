@@ -10,25 +10,6 @@ namespace XMLParse1
 {
     class ApptusXMLencode
     {
-        /// <summary>
-        /// Storage of the key excel columns. Init with -1.
-        /// </summary>
-        public struct ApptusHeaderIndexes
-        {
-            public int Level, Name, ID, Left, Right;
-            public bool valid; //remove?
-
-            public ApptusHeaderIndexes(int init)
-            {
-                this.Level = init;
-                this.Name = init;
-                this.ID = init;
-                this.Left = init;
-                this.Right = init;
-                this.valid = false;
-            }
-        }
-
         private struct headerCell
         {
             public int col;
@@ -40,59 +21,6 @@ namespace XMLParse1
                 this.uid = uid;
                 this.text = text;
             }
-        }
-
-        /// <summary>
-        /// Finds the key columns from the excel file.
-        /// </summary>
-        static private ApptusHeaderIndexes GatherApptusIndexes(string sourceExcel)
-        {
-            ApptusHeaderIndexes Indexes = new ApptusHeaderIndexes(-1);
-            IEnumerable<worksheet> targetExcel = Workbook.Worksheets(sourceExcel);
-            worksheet targetSheet = null;
-
-            //Get the first sheet. This program cannot handle more than one sheet.
-            var e = targetExcel.FirstOrDefault();
-            if (e != null)
-            {
-                targetSheet = e;
-                foreach (Cell cell in targetSheet.Rows[0].Cells)
-                {
-                    switch (cell.Text.ToLower())
-                    {
-                        case "level":
-                            Indexes.Level = cell.ColumnIndex;
-                            break;
-
-                        case "category hierarchy: name":
-                            Indexes.Name = cell.ColumnIndex;
-                            break;
-
-                        case "category hierarchy: id":
-                            Indexes.ID = cell.ColumnIndex;
-                            break;
-
-                        case "left":
-                            Indexes.Left = cell.ColumnIndex;
-                            break;
-
-                        case "right":
-                            Indexes.Right = cell.ColumnIndex;
-                            break;
-
-                        default:
-                            break;
-                    }
-                }//for each cell
-
-                Indexes.valid = (
-                    Indexes.Level > -1 &&
-                    Indexes.Name > -1 &&
-                    Indexes.ID > -1);
-                    //Indexes.Left > -1 && //not required
-                    //Indexes.Right > -1); //not required
-            }
-            return Indexes;
         }
 
         /// <summary>
@@ -113,33 +41,14 @@ namespace XMLParse1
         }
 
         /// <summary>
-        /// Get the "level" column number.
+        /// Opens an Excel file and writes an XML file based on it's contents.
         /// </summary>
-        static private int getLevelColumn(worksheet targetSheet)
-        {
-            foreach (Cell cell in targetSheet.Rows[0].Cells)
-            {
-                if (cell.Text.ToLower() == "level") return cell.ColumnIndex;
-            }
-            return -1;
-        }
-
-
-
-        /// <summary>
-        /// Creates an XML file from a SalesForce export.
-        /// </summary>
-        static public bool transformExceltoXML(string sourceExcel,string outFile, bool verboseXML, bool verboseAttributes)
+        /// Specifically, this function focuses on opening the file and checking it for the "level" column.
+        /// Encoding(writing) is passed to a sub-function.
+        static public bool transformExceltoXML(string sourceExcel,string outFile)
         {
             bool runResult = false;
-            int prevLevel = 0;
-            int currLevel = 0;
-            //int left = -1, right = -1;
-            //string name, ID;
             int levelCol = -1;
-            bool firstRowPassed = false, secondRowPassed = false;
-            //ApptusHeaderIndexes Indexes = ApptusXMLencode.GatherApptusIndexes(sourceExcel);
-            List<headerCell> excelHeader;
             IEnumerable<worksheet> targetExcel = Workbook.Worksheets(sourceExcel);
             worksheet targetSheet;
 
@@ -148,83 +57,72 @@ namespace XMLParse1
             if (e != null)
             {
                 targetSheet = e;
-                excelHeader = getSheetHeader(targetSheet);
-                levelCol = getLevelColumn(targetSheet);
+                //Get the column that contains "level"
+                foreach (Cell cell in targetSheet.Rows[0].Cells) if (cell.Text.ToLower() == "level") levelCol = cell.ColumnIndex;
 
-                if (levelCol == -1)
-                {
-                    MessageBox.Show("Oh no! it didn't find the level column! Cannot continue operation!");
-                    return runResult;
-                }
-
-                XmlWriterSettings writerSettings = new XmlWriterSettings();
-                writerSettings.OmitXmlDeclaration = true;
-                writerSettings.Indent = true;
-                writerSettings.IndentChars = "    ";
-                writerSettings.ConformanceLevel = ConformanceLevel.Document;
-                writerSettings.CloseOutput = true;
-
-                //This is the meat and potatoes
-                using (XmlWriter writer = XmlWriter.Create(outFile, writerSettings))
-                {
-                    foreach(Row row in targetSheet.Rows) //PRIMARY LOOP
-                    {
-                        if (!firstRowPassed) //Skip the first row (header)
-                        {
-                            firstRowPassed = true;
-                            continue;
-                        }
-
-                        //Collect this row's data from Excel
-                        currLevel = Convert.ToInt32(row.Cells[levelCol].Text);
-                        
-                        //Skip closes for the second row (first row of data, no closes needed)
-                        if (!secondRowPassed) secondRowPassed = true; 
-                        else //only close element(s) if currLevel <= prevLevel
-                        {
-                            for (; currLevel <= prevLevel; prevLevel--) //prevLevel is not reused beyond this line and may be modified
-                            {
-                                if (verboseXML) writer.WriteRaw("\n"); //WriteRaw breaks the auto-indentation of the XML processor
-                                writer.WriteEndElement();
-                            }
-                            if (verboseXML) writer.WriteRaw("\n");
-                        }
-
-                        writer.WriteStartElement("cat");
-
-                        foreach (headerCell cell in excelHeader)
-                        {
-                            writer.WriteElementString(cell.uid, row.Cells[cell.col].Text);
-                        }
-
-                        //name = row.Cells[Indexes.Name].Text;
-                        //ID = row.Cells[Indexes.ID].Text;
-                        //if (Indexes.Left > -1) left = Convert.ToInt32(row.Cells[Indexes.Left].Text);
-                        //if (Indexes.Right > -1) right = Convert.ToInt32(row.Cells[Indexes.Right].Text);
-
-
-                        ////Start and populate this element
-                        //writer.WriteStartElement("cat");
-                        //writer.WriteAttributeString("name", name);
-                        //writer.WriteAttributeString("ID", ID);
-                        //if (verboseAttributes)
-                        //{
-                        //    writer.WriteAttributeString("Level", Convert.ToString(currLevel));
-                        //    if (Indexes.Left > -1) writer.WriteAttributeString("Left", Convert.ToString(left));
-                        //    if (Indexes.Right > -1) writer.WriteAttributeString("Right", Convert.ToString(right));
-                        //}
-
-                        prevLevel = currLevel;
-                    }// loop to next row
-
-                    writer.Flush(); //clear the buffer
-                    writer.Close(); //free the allocation, close the file stream
-                    runResult = true;
-                }
+                if (levelCol == -1) MessageBox.Show("Oh no! it didn't find the level column! Cannot continue operation!");
+                //Error checking complete. Crunk! Pull the lever!
+                else runResult = writeTheXml(targetSheet, outFile, levelCol);
             }
             return runResult;
         }
 
+        /// <summary>
+        /// Creates an XML file from a SalesForce export.
+        /// </summary>
+        static private bool writeTheXml(worksheet targetSheet, string outFile, int levelCol)
+        {
+            bool runResult = false;
+            int prevLevel = -1, levelsToClose;
+            int currLevel = 0;
+            List<headerCell> excelHeader;
+
+            excelHeader = getSheetHeader(targetSheet);
+
+            XmlWriterSettings writerSettings = new XmlWriterSettings();
+            writerSettings.OmitXmlDeclaration = true;
+            writerSettings.Indent = true;
+            writerSettings.IndentChars = "    ";
+            writerSettings.ConformanceLevel = ConformanceLevel.Document;
+            writerSettings.CloseOutput = true;
+
+            //This is the meat and potatoes
+            using (XmlWriter writer = XmlWriter.Create(outFile, writerSettings))
+            {
+                //Setup the "table" node
+                writer.WriteStartDocument(); //This isn't required with the current XmlWriterSettings
+                writer.WriteStartElement("table");
+
+                //Setup the "header" node
+                writer.WriteStartElement("header");
+                foreach (headerCell cell in excelHeader) writer.WriteElementString(cell.uid, cell.text);
+                writer.WriteEndElement();
+
+                writer.WriteStartElement("hierarchy");
+                foreach (Row row in targetSheet.Rows.Skip(1)) //PRIMARY LOOP //Skip the first row (header)
+                {
+                    currLevel = Convert.ToInt32(row.Cells[levelCol].Text);
+
+                    //only close element(s) if currLevel <= prevLevel
+                    levelsToClose = prevLevel;
+                    for (; currLevel <= levelsToClose; levelsToClose--) writer.WriteEndElement();
+
+                    writer.WriteStartElement("cat");
+                    //write the data of the row
+                    foreach (headerCell cell in excelHeader) writer.WriteElementString(cell.uid, row.Cells[cell.col].Text);
+
+                    prevLevel = currLevel;
+                }// loop to next row
+
+                //cleanup
+                writer.WriteEndElement(); //hierarchy
+                writer.WriteEndElement(); //table
+                writer.WriteEndDocument();
+                writer.Flush(); //clear the buffer
+                writer.Close(); //free the allocation, close the file stream
+                runResult = true;
+            }
+            return runResult;
+        }
     }
-    
 }
