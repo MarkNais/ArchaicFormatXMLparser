@@ -10,7 +10,6 @@ namespace XMLParse1
         {
             public int apttusRow; //addressing is 1-count!
             public int excelRow;
-            public int level;
             public ExcelWorksheet ws; //remove me?
 
             public RecurseDetails(ExcelWorksheet init_ws)
@@ -18,9 +17,9 @@ namespace XMLParse1
                 this.ws = init_ws;
                 this.apttusRow = 0;
                 this.excelRow = 0;
-                this.level = -1;
             }
         }
+
         /// <summary>
         /// Reads the sourceXML and transforms it to Excel.
         /// </summary>
@@ -46,7 +45,7 @@ namespace XMLParse1
                 details.ws.Cells[1, 4].Value = "left";
                 details.ws.Cells[1, 5].Value = "right";
 
-                details = travelXML(details, doc.ChildNodes);
+                details = travelXML(ref details, doc.ChildNodes);
                 //recurse code here
                 //travelXML(details, doc.ChildNodes);
 
@@ -57,18 +56,16 @@ namespace XMLParse1
             return runResult;
         }
 
-        private static RecurseDetails travelXML(RecurseDetails details, XmlNodeList nodes)
+        /// <summary>
+        /// Recurses through the XML hiearchy, writing the contents to Excel.
+        /// </summary>
+        //"details" could be passed by value but "ref" saves memory.
+        private static RecurseDetails travelXML(ref RecurseDetails details, XmlNodeList nodes, int level = 0)
         {
             int currApttuscount = details.apttusRow + 1;
             int currExcelRow = -1;
             string ID, name;
             int left = currApttuscount;
-            int level = details.level;
-
-            if (nodes.Count > 0)
-            {
-                level = ++details.level;
-            }
 
             foreach (XmlNode node in nodes)
             {
@@ -82,8 +79,7 @@ namespace XMLParse1
                 details.ws.Cells[currExcelRow + 1, 3].Value = level;
                 details.ws.Cells[currExcelRow + 1, 4].Value = currApttuscount; //left
 
-                details = travelXML(details, node.ChildNodes);
-                details.level = level;
+                details = travelXML(ref details, node.ChildNodes, level + 1);
                 details.ws.Cells[currExcelRow + 1, 5].Value = ++details.apttusRow; //right
             }
 

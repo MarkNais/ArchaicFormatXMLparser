@@ -82,7 +82,10 @@ namespace XMLParse1
         {
             string targetFile = tbPath.Text;
             string outFile = DirFromFullPath(targetFile) + "//" + tbOutputName.Text + ".txt";
-            ApptusXMLencode.transformExceltoXML(targetFile, outFile);
+            if(false == ApptusXMLencode.transformExceltoXML(targetFile, outFile))
+            {
+                MessageBox.Show("Operation failed prematurely!");
+            }
         }
 
         private void bw_XML_RunComplete(object sender, RunWorkerCompletedEventArgs e)

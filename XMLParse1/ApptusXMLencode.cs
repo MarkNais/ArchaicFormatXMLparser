@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Linq;
-using System.Windows.Forms;
 using System.Xml;
 using Excel; //https://www.codeproject.com/Tips/801032/Csharp-How-To-Read-xlsx-Excel-File-With-Lines-of
 
@@ -60,7 +58,7 @@ namespace XMLParse1
                 //Get the column that contains "level"
                 foreach (Cell cell in targetSheet.Rows[0].Cells) if (cell.Text.ToLower() == "level") levelCol = cell.ColumnIndex;
 
-                if (levelCol == -1) MessageBox.Show("Oh no! it didn't find the level column! Cannot continue operation!");
+                if (levelCol == -1) Console.WriteLine("level not found in header. Ending attempted operation.");
                 //Error checking complete. Crunk! Pull the lever!
                 else runResult = writeTheXml(targetSheet, outFile, levelCol);
             }
@@ -73,8 +71,9 @@ namespace XMLParse1
         static private bool writeTheXml(worksheet targetSheet, string outFile, int levelCol)
         {
             bool runResult = false;
-            int prevLevel = -1, levelsToClose;
+            int prevLevel = -1, levelsDiff;
             int currLevel = 0;
+            var i = 1;
             List<headerCell> excelHeader;
 
             excelHeader = getSheetHeader(targetSheet);
@@ -87,41 +86,52 @@ namespace XMLParse1
             writerSettings.CloseOutput = true;
 
             //This is the meat and potatoes
-            using (XmlWriter writer = XmlWriter.Create(outFile, writerSettings))
+            try
             {
-                //Setup the "table" node
-                writer.WriteStartDocument(); //This isn't required with the current XmlWriterSettings
-                writer.WriteStartElement("table");
-
-                //Setup the "header" node
-                writer.WriteStartElement("header");
-                foreach (headerCell cell in excelHeader) writer.WriteElementString(cell.uid, cell.text);
-                writer.WriteEndElement();
-
-                writer.WriteStartElement("hierarchy");
-                foreach (Row row in targetSheet.Rows.Skip(1)) //PRIMARY LOOP //Skip the first row (header)
+                using (XmlWriter writer = XmlWriter.Create(outFile, writerSettings))
                 {
-                    currLevel = Convert.ToInt32(row.Cells[levelCol].Text);
+                    writer.WriteStartDocument(); //This isn't required with the current XmlWriterSettings
+                    writer.WriteStartElement("table");
 
-                    //only close element(s) if currLevel <= prevLevel
-                    levelsToClose = prevLevel;
-                    for (; currLevel <= levelsToClose; levelsToClose--) writer.WriteEndElement();
+                    writer.WriteStartElement("header");
+                    foreach (headerCell cell in excelHeader) writer.WriteElementString(cell.uid, cell.text);
+                    writer.WriteEndElement();
 
-                    writer.WriteStartElement("cat");
-                    //write the data of the row
-                    foreach (headerCell cell in excelHeader) writer.WriteElementString(cell.uid, row.Cells[cell.col].Text);
+                    writer.WriteStartElement("hierarchy");
+                    foreach (Row row in targetSheet.Rows.Skip(1)) //PRIMARY LOOP //Skip the first row (header)
+                    {
+                        currLevel = Convert.ToInt32(row.Cells[levelCol].Text);
 
-                    prevLevel = currLevel;
-                }// loop to next row
+                        //FIRST: Open a "nest" OR Close previous categories (and nests)
+                        if (i == 1) ; //Do not nest (or close elements) on the first row.
+                        else if (currLevel > prevLevel) writer.WriteStartElement("nest");
+                        else
+                        {
+                            for (levelsDiff = prevLevel - currLevel; levelsDiff >= 0; levelsDiff--)
+                            {
+                                writer.WriteEndElement();//close cat
+                                if (levelsDiff > 0) writer.WriteEndElement();//close nest
+                            }
+                        }
 
-                //cleanup
-                writer.WriteEndElement(); //hierarchy
-                writer.WriteEndElement(); //table
-                writer.WriteEndDocument();
-                writer.Flush(); //clear the buffer
-                writer.Close(); //free the allocation, close the file stream
-                runResult = true;
+                        //SECOND: Open and populate current category
+                        writer.WriteStartElement("cat");
+                        writer.WriteStartElement("values");
+                        foreach (headerCell cell in excelHeader) writer.WriteElementString(cell.uid, row.Cells[cell.col].Text);
+                        writer.WriteEndElement();
+
+                        prevLevel = currLevel;
+                        i++;
+                    }// loop to next row
+
+                    //cleanup
+                    writer.WriteEndDocument();//closes hierarchy and table. Safer that explicitly closing each.
+                    writer.Flush(); //clear the buffer
+                    writer.Close(); //free the allocation, close the file stream (Not required while in a "using" block)
+                    runResult = true;
+                }
             }
+            catch (Exception) {}
             return runResult;
         }
     }
