@@ -47,7 +47,7 @@
             this.tbPath.Name = "tbPath";
             this.tbPath.Size = new System.Drawing.Size(405, 20);
             this.tbPath.TabIndex = 0;
-            this.tbPath.Text = "C:\\Users\\MarkN\\Documents\\BUILDING CONSTRUCTION PRODUCTS.xlsx";
+            this.tbPath.Text = "C:\\Users\\MarkN\\Documents\\TestFile.txt";
             // 
             // btn_Browse
             // 
