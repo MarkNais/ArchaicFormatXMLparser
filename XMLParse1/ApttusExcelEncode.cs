@@ -77,7 +77,7 @@ namespace XMLParse1
                 RecurseDetails details = new RecurseDetails(ws, header);
 
                 //recurse code here
-                details = travelXML(ref details, doc["hierarchy"]["cat"]);
+                details = travelXML(ref details, doc["cat"]);
 
                 //Save the new workbook. We haven't specified the filename so use the Save as method.
                 p.SaveAs(new FileInfo(outName));
@@ -104,8 +104,6 @@ namespace XMLParse1
             foreach (XmlNode node in cat["values"].ChildNodes) details.ws.Cells[currExcelRow, i++].Value = node.InnerText;
             details.ws.Cells[currExcelRow, i++].Value = currApttuscount; // left
 
-            Debug.Print(currApttuscount.ToString());
-
             if (cat["nest"] != null)
             {
                 foreach (XmlNode nestedCat in cat["nest"].ChildNodes) details = travelXML(ref details, nestedCat, level + 1);
@@ -113,22 +111,6 @@ namespace XMLParse1
 
             details.ws.Cells[currExcelRow, i++].Value = ++details.apttusRow; // right
             details.ws.Cells[currExcelRow, i++].Value = level.ToString(); // level
-
-
-
-            //    foreach (XmlNode node in nodes)
-            //{
-            //    name = node.Attributes["name"].InnerText; //Needs error handling!
-            //    ID = node.Attributes["ID"].InnerText; //Needs error handling!
-
-            //    details.ws.Cells[currExcelRow + 1, 1].Value = name;
-            //    details.ws.Cells[currExcelRow + 1, 2].Value = ID;
-            //    details.ws.Cells[currExcelRow + 1, 3].Value = level;
-            //    details.ws.Cells[currExcelRow + 1, 4].Value = currApttuscount; //left
-
-            //    details = travelXML(ref details, node.ChildNodes, level + 1);
-            //    details.ws.Cells[currExcelRow + 1, 5].Value = ++details.apttusRow; //right
-            //}
 
             return details;
         }

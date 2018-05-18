@@ -96,8 +96,7 @@ namespace XMLParse1
                     writer.WriteStartElement("header");
                     foreach (headerCell cell in excelHeader) writer.WriteElementString(cell.uid, cell.text);
                     writer.WriteEndElement();
-
-                    writer.WriteStartElement("hierarchy");
+                    
                     foreach (Row row in targetSheet.Rows.Skip(1)) //PRIMARY LOOP //Skip the first row (header)
                     {
                         currLevel = Convert.ToInt32(row.Cells[levelCol].Text);
@@ -125,7 +124,7 @@ namespace XMLParse1
                     }// loop to next row
 
                     //cleanup
-                    writer.WriteEndDocument();//closes hierarchy and table. Safer that explicitly closing each.
+                    writer.WriteEndDocument();//closes hierarchy and table. Safer than explicitly closing each.
                     writer.Flush(); //clear the buffer
                     writer.Close(); //free the allocation, close the file stream (Not required while in a "using" block)
                     runResult = true;
